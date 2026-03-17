@@ -12,6 +12,10 @@ from .file_tools import chat_title
 
 console = Console()
 
+# TODO: This is a very basic terminal UI implementation. It can be improved in many ways, such as:
+# - Better input handling (e.g. support for arrow keys, history, etc.)
+# - Better rendering performance (e.g. only update the parts of the screen that changed)
+# - More features (e.g. chat deletion, renaming, etc.)
 
 class TerminalUI:
     def __init__(self):
@@ -20,7 +24,7 @@ class TerminalUI:
             console=self.console,
             auto_refresh=True,
             screen=True,
-            refresh_per_second=30,
+            refresh_per_second=60,
         )
         self._started = False
         self._last_frame = None
