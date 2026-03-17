@@ -23,7 +23,7 @@ qwen2.5:1.5b
 Clone the repo:
 
 ```
-git clone https://github.com/YOURNAME/cue-agent.git
+git clone https://github.com/diedasman/AI-DESKTOP-AGENT.git
 cd cue-agent
 ```
 
@@ -37,6 +37,12 @@ Run the install script:
 
 ```
 ./scripts/run.sh
+```
+
+If you run CUE over SSH, tmux, or on a Raspberry Pi terminal and notice screen flicker, the UI now leaves Rich's alternate-screen mode off by default. To opt back into the older full-screen behavior on a local terminal, run:
+
+```
+CUE_ALT_SCREEN=1 python -m cue.main
 ```
 
 ## Updating on a device
