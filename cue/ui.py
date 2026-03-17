@@ -148,9 +148,9 @@ def _build_chat_panel(active_chat, draft_assistant):
 
 
 def _build_input_panel(input_buffer):
-    prompt = Text()
+    prompt = Text(no_wrap=True, overflow="crop", end="")
     prompt.append("You > ", style="bold green")
-    prompt.append(input_buffer or "", style="white")
+    prompt.append(_clip_input_buffer(input_buffer), style="white")
     prompt.append("|", style="bold green")
     return Panel(prompt, title="Input", border_style="green")
 
@@ -190,6 +190,20 @@ def _format_chat_meta(chat):
     message_count = len(chat.get("messages", []))
     when = datetime.fromtimestamp(stamp).strftime("%Y-%m-%d %H:%M")
     return f"{message_count} msgs - {when}"
+
+
+def _clip_input_buffer(input_buffer):
+    if not input_buffer:
+        return ""
+
+    # Keep the end of the prompt visible on narrow terminals so the fixed-height
+    # input panel doesn't reflow while typing over SSH / tmux.
+    visible_width = max(console.size.width - 48, 12)
+    if len(input_buffer) <= visible_width:
+        return input_buffer
+    if visible_width <= 3:
+        return input_buffer[-visible_width:]
+    return "..." + input_buffer[-(visible_width - 3):]
 
 
 def _read_key():
