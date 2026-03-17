@@ -3,7 +3,8 @@
 cd ~/AI-DESKTOP-AGENT || exit 1
 
 # Make sure scripts are executable
-chmod +x scripts/run.sh scripts/update.sh
+chmod +x scripts/run.sh 
+chmod +x scripts/update.sh
 
 echo "Resetting local changes and syncing with GitHub..."
 

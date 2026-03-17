@@ -38,10 +38,10 @@ Run the install script:
 ./scripts/run.sh
 ```
 
-If you run CUE over SSH, tmux, or on a Raspberry Pi terminal and notice screen flicker, the UI now leaves Rich's alternate-screen mode off by default. To opt back into the older full-screen behavior on a local terminal, run:
+If you run CUE over SSH, tmux, or on a Raspberry Pi terminal and notice screen flicker, CUE now keeps Rich's full-screen UI but disables background auto-refresh for those remote terminal sessions. You can also force that behavior manually with:
 
 ```
-CUE_ALT_SCREEN=1 python -m cue.main
+CUE_AUTO_REFRESH=0 ./scripts/run.sh
 ```
 
 ## Updating on a device

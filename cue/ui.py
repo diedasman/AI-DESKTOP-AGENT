@@ -1,6 +1,6 @@
-# ui.py
 import os
 import sys
+from contextlib import contextmanager
 from datetime import datetime
 
 from rich.console import Console, Group
@@ -20,10 +20,14 @@ console = Console()
 
 class TerminalUI:
     def __init__(self):
+        auto_refresh = _env_flag("CUE_AUTO_REFRESH")
+        if auto_refresh is None:
+            auto_refresh = not _is_remote_terminal_session()
+
         self.console = console
         self.live = Live(
             console=self.console,
-            auto_refresh=True,
+            auto_refresh=auto_refresh,
             screen=True,
             refresh_per_second=60,
         )
@@ -60,18 +64,19 @@ class TerminalUI:
         self.start()
         self.render(chats, active_chat, status=status, input_buffer=buffer, force=True)
 
-        while True:
-            key = _read_key()
-            if key in {"\r", "\n"}:
-                return buffer
-            if key == "\x03":
-                return "/exit"
-            if key in {"\x08", "\x7f"}:
-                buffer = buffer[:-1]
-            elif key and key >= " ":
-                buffer += key
+        with _terminal_input_mode():
+            while True:
+                key = _read_key()
+                if key in {"\r", "\n"}:
+                    return buffer
+                if key == "\x03":
+                    return "/exit"
+                if key in {"\x08", "\x7f"}:
+                    buffer = buffer[:-1]
+                elif key and key >= " ":
+                    buffer += key
 
-            self.render(chats, active_chat, status=status, input_buffer=buffer)
+                self.render(chats, active_chat, status=status, input_buffer=buffer)
 
 
 def create_terminal_ui():
@@ -205,6 +210,21 @@ def _read_key_windows():
 
 
 def _read_key_posix():
+    key = sys.stdin.read(1)
+    if key == "\x1b":
+        next_char = sys.stdin.read(1)
+        if next_char == "[":
+            sys.stdin.read(1)
+        return ""
+    return key
+
+
+@contextmanager
+def _terminal_input_mode():
+    if os.name == "nt":
+        yield
+        return
+
     import termios
     import tty
 
@@ -212,12 +232,19 @@ def _read_key_posix():
     old_settings = termios.tcgetattr(fd)
     try:
         tty.setraw(fd)
-        key = sys.stdin.read(1)
-        if key == "\x1b":
-            next_char = sys.stdin.read(1)
-            if next_char == "[":
-                sys.stdin.read(1)
-            return ""
-        return key
+        yield
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+
+def _is_remote_terminal_session():
+    if os.name == "nt":
+        return False
+    return any(os.getenv(name) for name in ("SSH_TTY", "SSH_CONNECTION", "TMUX"))
+
+
+def _env_flag(name):
+    raw = os.getenv(name)
+    if raw is None:
+        return None
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
