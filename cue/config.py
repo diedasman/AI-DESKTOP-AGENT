@@ -1,6 +1,5 @@
+# config.py
 MODEL = "qwen2.5:1.5b"
-
-VERSION = "0.1.0"
 
 SYSTEM_PROMPT = """
 You are a desktop AI agent designed to assist the user across a wide range of tasks, including general questions, planning, coding, research, and system operations.

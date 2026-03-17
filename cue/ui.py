@@ -1,7 +1,7 @@
+# ui.py
 import os
 import sys
 from datetime import datetime
-import config
 
 from rich.console import Console, Group
 from rich.layout import Layout
@@ -95,9 +95,9 @@ def _build_layout(chats, active_chat, status, draft_assistant, input_buffer):
     )
     return layout
 
-
+# TODO: Update version
 def _build_header():
-    return Panel("CUE - Cognitive User Engine" + f" (v{config.VERSION})", border_style="cyan")
+    return Panel("CUE - Cognitive User Engine" + f" (v1.0)", border_style="cyan")
 
 
 def _build_footer(status):
