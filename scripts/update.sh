@@ -1,11 +1,19 @@
 #!/bin/bash
 
-echo "Updating CUE..."
+# Navigate to project directory
+cd ~/AI-DESKTOP-AGENT || exit 1
 
-git pull
+echo "Resetting local changes and syncing with GitHub..."
 
-source venv/bin/activate
+# Reset tracked files to match remote
+git fetch origin
+git reset --hard origin/master
 
-pip install -r requirements.txt
+# Clean untracked files/folders, but **exclude 'chats/'**
+# The -e option tells git clean to exclude paths
+git clean -fd -e chats/
 
-echo "Update complete."
+echo "Pulling the latest version from GitHub..."
+git pull origin master
+
+echo "Update complete! You can now run the agent with './run.sh'."

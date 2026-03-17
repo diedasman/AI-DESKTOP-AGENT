@@ -24,7 +24,6 @@ Clone the repo:
 
 ```
 git clone https://github.com/diedasman/AI-DESKTOP-AGENT.git
-cd cue-agent
 ```
 
 Run the install script:
