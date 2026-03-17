@@ -2,6 +2,7 @@ import os
 import sys
 from datetime import datetime
 
+from config import VERSION
 from rich.console import Console, Group
 from rich.layout import Layout
 from rich.live import Live
@@ -96,7 +97,7 @@ def _build_layout(chats, active_chat, status, draft_assistant, input_buffer):
 
 
 def _build_header():
-    return Panel("CUE - Cognitive User Engine", border_style="cyan")
+    return Panel("CUE - Cognitive User Engine" + f" (v{VERSION})", border_style="cyan")
 
 
 def _build_footer(status):
