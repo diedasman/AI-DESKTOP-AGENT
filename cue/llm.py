@@ -1,5 +1,5 @@
 import ollama  # type: ignore
-from duckduckgo_search import DDGS
+# from duckduckgo_search import DDGS
 from rich.console import Console
 
 from .config import MODEL, SYSTEM_PROMPT
@@ -17,12 +17,12 @@ def build_messages(history, user_prompt):
     return messages
 
 
-def search_web(query):
-    results = []
-    with DDGS() as ddgs:
-        for r in ddgs.text(query, max_results=3):
-            results.append(r["body"])
-    return "\n".join(results)
+# def search_web(query):
+#     results = []
+#     with DDGS() as ddgs:
+#         for r in ddgs.text(query, max_results=3):
+#             results.append(r["body"])
+#     return "\n".join(results)
 
 
 def stream_chat(history, user_prompt):
