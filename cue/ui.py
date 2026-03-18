@@ -2,6 +2,7 @@ import os
 import sys
 from contextlib import contextmanager
 from datetime import datetime
+from shutil import get_terminal_size
 
 from rich.console import Console, Group
 from rich.layout import Layout
@@ -36,6 +37,7 @@ class TerminalUI:
 
     def start(self):
         if not self._started:
+            self.console.clear()
             self.live.start()
             self._started = True
 
@@ -45,14 +47,19 @@ class TerminalUI:
             self._started = False
 
     def render(self, chats, active_chat, status=None, draft_assistant="", input_buffer="", force=False):
-        self.start()
-        frame = _build_layout(chats, active_chat, status, draft_assistant, input_buffer)
+        if not self._started:
+            self.start()
+
+        terminal_size = _measure_terminal_size(self.console)
+        frame = _build_layout(chats, active_chat, status, draft_assistant, input_buffer, terminal_size)
         frame_key = (
             active_chat.get("id"),
             len(active_chat.get("messages", [])),
             status or "",
             draft_assistant,
             input_buffer,
+            terminal_size.width,
+            terminal_size.height,
             tuple((chat.get("id"), chat.get("updated_at"), len(chat.get("messages", []))) for chat in chats),
         )
         if force or frame_key != self._last_frame:
@@ -83,7 +90,7 @@ def create_terminal_ui():
     return TerminalUI()
 
 
-def _build_layout(chats, active_chat, status, draft_assistant, input_buffer):
+def _build_layout(chats, active_chat, status, draft_assistant, input_buffer, terminal_size):
     layout = Layout()
     layout.split_column(
         Layout(_build_header(), size=3),
@@ -95,8 +102,8 @@ def _build_layout(chats, active_chat, status, draft_assistant, input_buffer):
         Layout(name="main", ratio=1),
     )
     layout["main"].split_column(
-        Layout(_build_chat_panel(active_chat, draft_assistant), ratio=1),
-        Layout(_build_input_panel(input_buffer), size=5),
+        Layout(_build_chat_panel(active_chat, draft_assistant, terminal_size), ratio=1),
+        Layout(_build_input_panel(input_buffer, terminal_size), size=5),
     )
     return layout
 
@@ -135,31 +142,31 @@ def _build_sidebar(chats, active_chat):
     return Panel(Group(*lines), title="Chats", border_style="magenta")
 
 
-def _build_chat_panel(active_chat, draft_assistant):
+def _build_chat_panel(active_chat, draft_assistant, terminal_size):
     messages = list(active_chat.get("messages", []))
     if draft_assistant:
         messages.append({"role": "assistant", "content": draft_assistant})
 
     return Panel(
-        _render_messages(messages),
+        _render_messages(messages, terminal_size),
         title=chat_title(active_chat, max_length=40),
         border_style="cyan",
     )
 
 
-def _build_input_panel(input_buffer):
+def _build_input_panel(input_buffer, terminal_size):
     prompt = Text(no_wrap=True, overflow="crop", end="")
     prompt.append("You > ", style="bold green")
-    prompt.append(_clip_input_buffer(input_buffer), style="white")
+    prompt.append(_clip_input_buffer(input_buffer, terminal_size), style="white")
     prompt.append("|", style="bold green")
     return Panel(prompt, title="Input", border_style="green")
 
 
-def _render_messages(messages):
+def _render_messages(messages, terminal_size):
     if not messages:
         return Text("New chat ready. Type a message below or use /switch to open an older chat.", style="dim")
 
-    max_lines = max(console.size.height - 20, 12)
+    max_lines = max(terminal_size.height - 20, 12)
     collected = []
     total_lines = 0
 
@@ -192,18 +199,33 @@ def _format_chat_meta(chat):
     return f"{message_count} msgs - {when}"
 
 
-def _clip_input_buffer(input_buffer):
+def _clip_input_buffer(input_buffer, terminal_size):
     if not input_buffer:
         return ""
 
     # Keep the end of the prompt visible on narrow terminals so the fixed-height
     # input panel doesn't reflow while typing over SSH / tmux.
-    visible_width = max(console.size.width - 48, 12)
+    visible_width = max(terminal_size.width - 48, 12)
     if len(input_buffer) <= visible_width:
         return input_buffer
     if visible_width <= 3:
         return input_buffer[-visible_width:]
     return "..." + input_buffer[-(visible_width - 3):]
+
+
+def _measure_terminal_size(console_instance):
+    for stream in (sys.__stdout__, sys.__stderr__, sys.stdout, sys.stderr):
+        if stream is None:
+            continue
+        try:
+            width, height = os.get_terminal_size(stream.fileno())
+        except (AttributeError, OSError, ValueError):
+            continue
+        if width > 0 and height > 0:
+            return console_instance.size.__class__(width, height)
+
+    fallback = get_terminal_size(fallback=(console_instance.size.width, console_instance.size.height))
+    return console_instance.size.__class__(fallback.columns, fallback.lines)
 
 
 def _read_key():
